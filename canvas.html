@@ -1,11 +1,15 @@
 <canvas id="can1" width="800" height="600"></canvas>
 <script type="text/javascript">
-  var can1 = document.getElementById("can1");
+  var can1 = document.getElementById("can1"); // 获取一个元素
   var ctx = can1.getContext("2d");
-  nums = [268, 1236, 1273, 1545, 1988];
-  datas = ["路口一", "路口二", "路口三", "路口四", "路口五"];
+  nums = [268, 1236, 1273, 1545, 1988]; // 定义数据
+  datas = ["路口一", "路口二", "路口三", "路口四", "路口五"]; // 定义横坐标内容
+  var cols = (can1.width - 50) / nums.length; // 柱子的个数，逐个柱子占位宽度和间距共90
+  var colGaps = 20; //定义柱状图宽度
+
   //画出坐标线
   function drawBorder() {
+    ctx.strokeStyle = "#000";
     ctx.beginPath();
     ctx.moveTo(100, 50);
     ctx.lineTo(100, 550);
@@ -18,10 +22,10 @@
   function drawLine() {
     for (i = 0; i < nums.length - 1; i++) {
       //起始坐标
-      var numsY = 550 - nums[i] / 500 * 100; // 假设i=0,550-268-5
+      var numsY = 550 - (nums[i] / 500) * 100; // 假设i=0,550-268-5
       var numsX = i * 100 + 150; // 假设i=0, 0*100+150
       //终止坐标
-      var numsNY = 550 - nums[i + 1] / 500 * 100; // 终止坐标就是下一个起始坐标
+      var numsNY = 550 - (nums[i + 1] / 500) * 100; // 终止坐标就是下一个起始坐标
       var numsNX = (i + 1) * 100 + 150;
       ctx.beginPath();
       ctx.moveTo(numsX, numsY); // 定义开始的坐标
@@ -32,23 +36,17 @@
       ctx.stroke();
     }
   }
-  //绘制折线点的菱形和数值，横坐标值，纵坐标值
+  //绘制折线数值，横坐标值，纵坐标值
   function drawBlock() {
     for (i = 0; i <= nums.length; i++) {
-      var numsY = 550 - nums[i] / 500 * 100;
+      var numsY = 550 - (nums[i] / 500) * 100;
       var numsX = i * 100 + 150;
       ctx.beginPath();
-      // 画出折线上的方块
-      // ctx.moveTo(numsX - 4, numsY);
-      // ctx.lineTo(numsX, numsY - 4);
-      // ctx.lineTo(numsX + 4, numsY);
-      // ctx.lineTo(numsX, numsY + 4);
-      // ctx.fill();
       ctx.font = "15px scans-serif";
       ctx.fillStyle = "black";
-      //折线上的点值
-      var text = ctx.measureText(nums[i]);
-      ctx.fillText(nums[i], numsX - text.width, numsY - 10);
+      //折线上的数值
+      var text = ctx.measureText(nums[i]); // 计算出文字的可能宽度
+      ctx.fillText(nums[i], numsX - text.width, numsY - 10); // 参数分别为画布上输出的文本，绘制相对于画布的x坐标位置，绘制相对于画布的y坐标的位置，（可选参数，允许的最大文本宽度）
       //绘制纵坐标
       var colText = ctx.measureText((nums.length - i) * 500);
       ctx.fillText((nums.length - i) * 500, 90 - colText.width, i * 100 + 55);
@@ -63,6 +61,27 @@
       ctx.stroke();
     }
   }
+
+  function drawRects() {
+    for (var i = 0; i < nums.length; i++) {
+      //绘制柱状图
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "#72F6FF";
+      ctx.fillStyle = "#72F6FF";
+      ctx.beginPath();
+      // rect 四个值分别代表了矩形左上角横坐标，左上角纵坐标，宽度，高度
+      ctx.rect(
+        (i + 1) * cols,
+        can1.height - (nums[i] / 500) * 100 - 50,
+        colGaps,
+        nums[i]
+      ); //横坐标为90的倍数，纵坐标为画布高度减去柱子高度
+      ctx.fill();
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+  drawRects();
   drawBorder();
   drawLine();
   drawBlock();
