@@ -1,15 +1,16 @@
-<canvas id="can1" width="800" height="580"></canvas>
+<canvas style="background-color:#253143" id="can1" width="800" height="600"></canvas>
 <script type="text/javascript">
   var can1 = document.getElementById("can1"); // 获取一个元素
   var ctx = can1.getContext("2d");
-  nums = [268, 1236, 1273, 1545, 1988]; // 定义数据
-  datas = ["路口一", "路口二", "路口三", "路口四", "路口五"]; // 定义横坐标内容
+  nums = [78, 121, 183, 77, 187]; // 定义数据
+  rectNums1 = [65, 73, 105, 76, 83]
+  datas = [200, 400, 600, 800, 1000]; // 定义横坐标内容
   var cols = (can1.width - 150) / nums.length - 30; // 柱子的个数，逐个柱子占位宽度和间距共90
   var colGaps = 20; //定义柱状图宽度
 
   //画出坐标线
   function drawBorder() {
-    ctx.strokeStyle = "#000";
+    ctx.strokeStyle = "#7a7b7f";
     ctx.beginPath();
     ctx.moveTo(100, 50);
     ctx.lineTo(100, 550);
@@ -22,17 +23,17 @@
   function drawLine() {
     for (i = 0; i < nums.length - 1; i++) {
       //起始坐标
-      var numsY = 550 - (nums[i] / 500) * 100; // 假设i=0,550-268-5
+      var numsY = 550 - (nums[i] / 100) * 100; // 假设i=0,550-268-5
       var numsX = i * 100 + 150; // 假设i=0, 0*100+150
       //终止坐标
-      var numsNY = 550 - (nums[i + 1] / 500) * 100; // 终止坐标就是下一个起始坐标
+      var numsNY = 550 - (nums[i + 1] / 100) * 100; // 终止坐标就是下一个起始坐标
       var numsNX = (i + 1) * 100 + 150;
       var numsBY =
         numsY -
-        Math.sqrt(10 * 10 + 10 / (150 / Math.abs(nums[i] - nums[i + 1]))); // 左下角  左上角的纵坐标-根号下（线条宽度的平方+线条的宽度 / (间距/相邻两个值的差)）
+        Math.sqrt(10 * 10 + 10 / (150 / Math.abs(nums[i] - nums[i + 1]))) - 40; // 左下角  左上角的纵坐标-根号下（线条宽度的平方+线条的宽度 / (间距/相邻两个值的差)）
       var numsDY =
         numsNY -
-        Math.sqrt(10 * 10 + 10 / (150 / Math.abs(nums[i] - nums[i + 1]))); // 右下角
+        Math.sqrt(10 * 10 + 10 / (150 / Math.abs(nums[i] - nums[i + 1]))) - 40; // 右下角
       ctx.beginPath();
       ctx.moveTo(numsX, numsY); // 定义开始的坐标
       ctx.lineTo(numsX, numsBY);
@@ -40,6 +41,7 @@
       ctx.lineTo(numsNX, numsNY); // 定义线条结束坐标
       ctx.lineTo(numsX, numsY);
       ctx.fillStyle = "#80aa33";
+      ctx.globalAlpha = 0.7
       ctx.closePath();
       ctx.fill();
     }
@@ -47,17 +49,17 @@
   //绘制折线数值，横坐标值，纵坐标值
   function drawBlock() {
     for (i = 0; i <= nums.length; i++) {
-      var numsY = 550 - (nums[i] / 500) * 100;
+      var numsY = 550 - (nums[i] / 100) * 100;
       var numsX = i * 100 + 150;
       ctx.beginPath();
       ctx.font = "15px scans-serif";
-      ctx.fillStyle = "black";
+      ctx.fillStyle = "#aeb3b9";
       //折线上的数值
-      var text = ctx.measureText(nums[i]); // 计算出文字的可能宽度
-      ctx.fillText(nums[i], numsX - text.width, numsY - 10); // 参数分别为画布上输出的文本，绘制相对于画布的x坐标位置，绘制相对于画布的y坐标的位置，（可选参数，允许的最大文本宽度）
+      // var text = ctx.measureText(nums[i]); // 计算出文字的可能宽度
+      // ctx.fillText(nums[i], numsX - text.width, numsY - 10); // 参数分别为画布上输出的文本，绘制相对于画布的x坐标位置，绘制相对于画布的y坐标的位置，（可选参数，允许的最大文本宽度）
       //绘制纵坐标
       var colText = ctx.measureText((nums.length - i) * 500);
-      ctx.fillText((nums.length - i) * 500, 90 - colText.width, i * 100 + 55);
+      ctx.fillText((nums.length - i) * 100, 90 - colText.width, i * 100 + 55);
       //绘制横坐标并判断
       if (i < 5) {
         var rowText = ctx.measureText(datas[i]);
@@ -74,16 +76,38 @@
     for (var i = 0; i < nums.length; i++) {
       //绘制柱状图
       ctx.lineWidth = 1;
-      ctx.strokeStyle = "#72F6FF";
-      ctx.fillStyle = "#72F6FF";
+      ctx.strokeStyle = i % 2 == 0 ? "white" : "red";
+      ctx.fillStyle = i % 2 == 0 ? "white" : "red";
+      ctx.beginPath();
+      // rect 四个值分别代表了矩形左上角横坐标， 左上角纵坐标， 宽度， 高度
+      // ctx.rect(
+      //   (i + 1) * cols + 50,
+      //   can1.height - nums[i] - 50,
+      //   colGaps,
+      //   nums[i]
+      // ); // 横坐标为90的倍数，纵坐标为画布高度减去柱子高度
+      ctx.moveTo((i + 1) * cols + 50, can1.height - nums[i] - 50);
+      ctx.lineTo((i + 1) * cols + 70, can1.height - nums[i] - 50);
+      ctx.lineTo((i + 1) * cols + 70, can1.height - 50);
+      ctx.lineTo((i + 1) * cols + 50, can1.height - 50);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawSecondRects() {
+    for (var i = 0; i < nums.length; i++) {
+      //绘制柱状图
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = i % 2 == 0 ? "red" : "white";
+      ctx.fillStyle = i % 2 == 0 ? "red" : "white";
       ctx.beginPath();
       // rect 四个值分别代表了矩形左上角横坐标，左上角纵坐标，宽度，高度
-      ctx.rect(
-        (i + 1) * cols + 50,
-        can1.height - (nums[i] / 500) * 100,
-        colGaps,
-        nums[i]
-      ); // 横坐标为90的倍数，纵坐标为画布高度减去柱子高度
+      // ctx.rect((i + 1) * cols + 50, 100, colGaps, 100); // 横坐标为90的倍数，纵坐标为画布高度减去柱子高度
+      ctx.moveTo((i + 1) * cols + 50, can1.height - nums[i] - 50);
+      ctx.lineTo((i + 1) * cols + 70, can1.height - nums[i] - 50);
+      ctx.lineTo((i + 1) * cols + 70, can1.height - nums[i] - 50 - rectNums1[i]);
+      ctx.lineTo((i + 1) * cols + 50, can1.height - nums[i] - 50 - rectNums1[i])
       ctx.fill();
       ctx.globalAlpha = 1;
       ctx.stroke();
@@ -91,7 +115,8 @@
   }
 
   drawBorder();
-  drawLine();
   drawRects();
+  drawSecondRects();
+  drawLine();
   drawBlock();
 </script>
