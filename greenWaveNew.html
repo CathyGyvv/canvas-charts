@@ -1,0 +1,590 @@
+<div class="canvas-box" style="position:relative">
+  <canvas
+    style="background-color:#253143"
+    id="canvas"
+    width="1800"
+    height="600"
+  ></canvas>
+</div>
+<script type="text/javascript">
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var roadName = [
+    "诸光路与蟠中东路路口",
+    "诸光路与徐民东路路口",
+    "盈港东路与诸光路路口",
+    "诸光路与会卓路路口",
+    "诸光路与徐泾港路路口",
+    "诸光路与谢卫路路口"
+  ];
+  // 相位名称 A 为 绿灯， B,C,D 为 红灯
+  var phaseName = [
+    ["A", "B", "C"],
+    ["A", "B", "C"],
+    ["A", "B", "C", "D"],
+    ["A", "B", "C"],
+    ["A", "B"],
+    ["A", "B"]
+  ];
+  // 协调相位
+  var coordinate = ["A", "A", "A", "A", "A", "A"];
+
+  // 相位时长
+  var phaseTime = [
+    [92, 35, 33],
+    [105, 25, 30],
+    [51, 33, 38, 38],
+    [84, 34, 43],
+    [125, 35],
+    [112, 42]
+  ];
+  var cycle = [160, 160, 160, 160, 160, 154]; // 周期
+  var phaseDiff = [41, 20, 0, 115, 92, 49]; // 相位差
+  var distance = [0, 349, 381, 452, 277, 541]; //第一位为第一根柱子和坐标轴的距离
+  var green = [92, 105, 51, 84, 125, 112]; // 协调相位时长
+  var red = [68, 55, 109, 76, 35, 42]; // 非协调相位时长
+  var time = [
+    0,
+    35.56814437,
+    54.20294733,
+    52.84762046,
+    26.98580922,
+    47.18201591
+  ];
+  var speedData = [0, 9.8121, 7.029128, 8.55289, 10.264654, 11.46623325];
+  var bottom = 50;
+
+  // 画出坐标系
+  function coordinateSystem() {
+    ctx.strokeStyle = "#7a7b7f";
+    ctx.beginPath();
+    ctx.moveTo(100, 50);
+    ctx.lineTo(100, 550);
+    ctx.moveTo(100, 550);
+    ctx.lineTo(1700, 550);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fillStyle = "grey ";
+
+    for (var i = 0; i < 10; i++) {
+      var numsY = 550 - (distance[i] / 100) * 100;
+      var numsX = i * 100 + 150;
+
+      // 纵坐标
+      var colText = ctx.measureText((12 - i) * 500); // 检查字体的宽度
+      ctx.fillText(
+        i * 100,
+        100 - colText.width,
+        (distance.length - 1 - i) * 100 + 50
+      );
+      // 横坐标
+      var rowText = ctx.measureText(distance[i]);
+      ctx.fillText(i * 200, (i + 1) * 100, 570);
+    }
+  }
+
+  function draw() {}
+
+  function drawRoadName() {
+    for (var i = 0; i < roadName.length; i++) {
+      ctx.fillStyle = "grey ";
+      ctx.font = "12px '微软雅黑'";
+      ctx.textAlign = "left";
+      ctx.fillText(
+        roadName[i],
+        distance[i] + 80,
+        canvas.height - 25 + ((i + 1) % 2) * 20
+      );
+    }
+  }
+
+  var allPhase = [];
+  var allPhaseName = [];
+  var color = "";
+
+  function drawChangeRect(params) {
+    var cycle1 = [];
+    var cycle2 = [];
+    var cycle3 = [];
+    var phaseData = []; // 存放每个路口的左右数据
+    var phaseNameData = [];
+    for (var i = 0; i < roadName.length; i++) {
+      var remainder = phaseDiff[i] % cycle[i];
+      // 如果余数为0
+      Array.prototype.getNumArrayTotal = function(num) {
+        var total = this.reduce(function(pre, cur, index, arr) {
+          if (index > num - 1) {
+            return pre + 0;
+          }
+          return pre + cur;
+        });
+        return total;
+      };
+      if (remainder === 0) {
+        smallAllPhase = phaseTime[i].concat(phaseTime[i]).concat(phaseTime[i]);
+        smallAllPhaseName = phaseName[i]
+          .concat(phaseName[i])
+          .concat(phaseName[i]);
+        phaseData.push(smallAllPhase);
+        phaseNameData.push(smallAllPhaseName);
+        for (var k = 0; k < smallAllPhaseName.length; k++) {
+          color = smallAllPhaseName[k] === coordinate[i] ? "white" : "red"; // 获取颜色
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(
+            (distance[i] + distance.getNumArrayTotal(i)) / 2 + 100,
+            canvas.height -
+              (k === 0 ? 0 : smallAllPhase.getNumArrayTotal(k)) -
+              bottom
+          );
+          ctx.lineTo(
+            (distance[i] + distance.getNumArrayTotal(i)) / 2 + 20 + 100,
+            canvas.height -
+              (k === 0 ? 0 : smallAllPhase.getNumArrayTotal(k)) -
+              bottom
+          );
+          // 将两个相位之间留出1的空隙
+          ctx.lineTo(
+            (distance[i] + distance.getNumArrayTotal(i)) / 2 + 20 + 100,
+            canvas.height - smallAllPhase.getNumArrayTotal(k + 1) - bottom + 1
+          );
+          ctx.lineTo(
+            (distance[i] + distance.getNumArrayTotal(i)) / 2 + 100,
+            canvas.height - smallAllPhase.getNumArrayTotal(k + 1) - bottom + 1
+          );
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      } else {
+        var endtempPhase = []; // 第三个周期的相位
+        var endtempPhaseName = []; // 第三个周期的相位名称
+        var starttempPhase = phaseTime[i].slice(); // 拷贝数组并且不改变原数组
+        var starttempName = phaseName[i].slice();
+        // 如果一个相位周期的长度为4
+        if (phaseTime[i].length === 4) {
+          if (
+            // 相位差大于前三个值的和
+            phaseDiff[i] >
+            phaseTime[i][phaseTime[i].length - 1] +
+              phaseTime[i][phaseTime[i].length - 2] +
+              phaseTime[i][phaseTime[i].length - 3]
+          ) {
+            starttempPhase.unshift(
+              phaseDiff[i] -
+                (phaseTime[i][phaseTime[i].length - 1] +
+                  phaseTime[i][phaseTime[i].length - 2] +
+                  phaseTime[i][phaseTime[i].length - 3]),
+              phaseTime[i][phaseTime[i].length - 3],
+              phaseTime[i][phaseTime[i].length - 2],
+              phaseTime[i][phaseTime[i].length - 1]
+            );
+            starttempName.push("A", "B", "B", "B");
+            endtempPhaseName.unshift("A");
+            endtempPhase.push(cycle[i] - phaseDiff[i]);
+          }
+          if (
+            // 相位差大于最后两个值的和小于最后三个值的和
+            phaseDiff[i] >
+              phaseTime[i][phaseTime[i].length - 1] +
+                phaseTime[i][phaseTime[i].length - 2] &&
+            phaseDiff[i] <
+              phaseTime[i][phaseTime[i].length - 1] +
+                phaseTime[i][phaseTime[i].length - 2] +
+                phaseTime[i][phaseTime[i].length - 3]
+          ) {
+            starttempPhase.unshift(
+              phaseDiff[i] -
+                (phaseTime[i][phaseTime[i].length - 1] +
+                  phaseTime[i][phaseTime[i].length - 2]),
+              phaseTime[i][phaseTime[i].length - 2],
+              phaseTime[i][phaseTime[i].length - 1]
+            );
+            endtempPhase.push(
+              phaseTime[i][0],
+              cycle[i] - phaseDiff[i] - phaseTime[i][0]
+            );
+            starttempName.unshift("B", "B", "B");
+            endtempPhaseName.push("A", "B");
+          }
+          // 相位差大于最后一个数的值小于最后两个数的值
+          if (
+            phaseDiff[i] > phaseTime[i][phaseTime[i].length - 1] &&
+            phaseDiff[i] <
+              phaseTime[i][phaseTime[i].length - 1] +
+                phaseTime[i][phaseTime[i].length - 2]
+          ) {
+            starttempPhase.unshift(
+              phaseDiff[i] - phaseTime[i][phaseTime[i].length - 1],
+              phaseTime[i][phaseTime[i].length - 1]
+            );
+            endtempPhase.push(
+              phaseTime[i][0],
+              cycle[i] - phaseDiff[i] - phaseTime[i][0]
+            );
+            starttempName.unshift("B", "B");
+            endtempPhaseName.push("A", "B");
+          }
+          // 相位差小于最后一个数的值
+          if (phaseDiff[i] < phaseTime[i][phaseTime[i].length - 1]) {
+            starttempPhase.unshift(phaseDiff[i]);
+            endtempPhase.push(
+              phaseTime[i][0],
+              phaseTime[i][1],
+              phaseTime[i][2],
+              phaseTime[i][phaseTime[i].length - 1] - phaseDiff[i]
+            );
+            starttempName.unshift("B");
+            endtempPhaseName.push("A", "B", "B", "B");
+          }
+        }
+        // 如果一个相位周期的长度为3
+        if (phaseTime[i].length === 3) {
+          if (phaseDiff[i] < phaseTime[i][phaseTime[i].length - 1]) {
+            var starttempPhase = phaseTime[i].slice(); // 拷贝数组并且不改变原数组
+            starttempPhase.unshift(phaseDiff[i]);
+            starttempName.unshift(phaseName[i][phaseName[i].length - 1]);
+            endtempPhase.push(
+              phaseTime[i][0],
+              phaseTime[i][1],
+              phaseTime[i][phaseTime[i].length - 1] - phaseDiff[i]
+            );
+            endtempPhaseName.push("A", "B", "B");
+          }
+          if (
+            phaseDiff[i] > phaseTime[i][phaseTime[i].length - 1] &&
+            phaseDiff[i] <
+              phaseTime[i][phaseTime[i].length - 1] +
+                phaseTime[i][phaseTime[i].length - 2]
+          ) {
+            starttempPhase.unshift(
+              phaseDiff[i] - phaseTime[i][phaseTime[i].length - 1],
+              phaseTime[i][phaseTime[i].length - 1]
+            );
+            starttempName.unshift("B", "B");
+            endtempPhase.push(
+              phaseTime[i][0],
+              cycle[i] - phaseDiff[i] - phaseTime[i][0]
+            );
+            endtempPhaseName.push("A", "B");
+          }
+          if (
+            phaseDiff[i] >
+            phaseTime[i][phaseTime[i].length - 1] +
+              phaseTime[i][phaseTime[i].length - 2]
+          ) {
+            starttempPhase.unshift(
+              phaseDiff[i] -
+                (phaseTime[i][phaseTime[i].length - 1] +
+                  phaseTime[i][phaseTime[i].length - 2]),
+              phaseTime[i][phaseTime[i].length - 2],
+              phaseTime[i][phaseTime[i].length - 1]
+            );
+            endtempPhase.push(cycle[i] - phaseDiff[i]);
+            starttempName.unshift("A", "B", "B");
+            endtempPhaseName.push("A");
+          }
+        }
+        // 如果一个相位周期的长度为2
+        if (phaseTime[i].length === 2) {
+          if (phaseDiff[i] > phaseTime[i][phaseTime[i].length - 1]) {
+            starttempPhase.unshift(
+              phaseDiff[i] - phaseTime[i][phaseTime[i].length - 1],
+              phaseTime[i][phaseTime[i].length - 1]
+            );
+            endtempPhase.push(cycle[i] - phaseDiff[i]);
+            starttempName.push("A", "B");
+            endtempPhaseName.push("A");
+          }
+          if (phaseDiff[i] < phaseTime[i][phaseTime[i].length - 1]) {
+            starttempPhase.unshift(phaseDiff[i]);
+            // 最后一个周期为周期第一个数，相位差减去周期第一个数
+            endtempPhase.push(
+              phaseTime[i][phaseTime[i].length - 1],
+              phaseDiff[i] - phaseTime[i][phaseTime[i].length - 1]
+            );
+            starttempName.unshift("A");
+            endtempPhaseName.push("A", "B");
+          }
+        }
+        // 一个周期的长度为1
+        if (phaseTime[i].length === 1) {
+          starttempPhase.unshift(phaseTime[i][0]);
+          endtempPhase.push(cycle[i] - phaseDiff[i]);
+          starttempName.unshift("A");
+          endtempPhaseName.push("A");
+        }
+
+        var smallAllPhase = starttempPhase
+          .concat(phaseTime[i])
+          .concat(endtempPhase);
+        var smallAllPhaseName = starttempName
+          .concat(phaseName[i])
+          .concat(endtempPhaseName);
+
+        phaseData.push(smallAllPhase);
+        phaseNameData.push(smallAllPhaseName);
+
+        for (var k = 0; k < smallAllPhaseName.length; k++) {
+          color = smallAllPhaseName[k] === coordinate[i] ? "white" : "red"; // 获取颜色
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(
+            (distance[i] + distance.getNumArrayTotal(i)) / 2 + 100,
+            canvas.height -
+              (k === 0 ? 0 : smallAllPhase.getNumArrayTotal(k)) -
+              bottom
+          );
+          ctx.lineTo(
+            (distance[i] + distance.getNumArrayTotal(i)) / 2 + 20 + 100,
+            canvas.height -
+              (k === 0 ? 0 : smallAllPhase.getNumArrayTotal(k)) -
+              bottom
+          );
+          // 将两个相位之间留出1的空隙
+          ctx.lineTo(
+            (distance[i] + distance.getNumArrayTotal(i)) / 2 + 20 + 100,
+            canvas.height - smallAllPhase.getNumArrayTotal(k + 1) - bottom + 1
+          );
+          ctx.lineTo(
+            (distance[i] + distance.getNumArrayTotal(i)) / 2 + 100,
+            canvas.height - smallAllPhase.getNumArrayTotal(k + 1) - bottom + 1
+          );
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+        for (var j = 0; j < smallAllPhaseName.length; j++) {
+          if (smallAllPhaseName[j] === "A") {
+            // 所有绿灯的起点
+            // console.log('smallAllPhaseName[j]', smallAllPhase.getNumArrayTotal(j))
+          }
+        }
+      }
+    }
+
+    var tanAngle = []; // 绿波倾斜角度的tan值
+    // 时间
+    for (var k = 0; k < time.length; k++) {
+      tanAngle.push(time[k] / distance[k]);
+      // phaseData[k] 表示某一个路口的所有的数据
+      for (var i = 0; i < phaseData[k].length; i++) {}
+    }
+
+    var lastT1 = [];
+    var lastT2 = [];
+    var lastT21 = [];
+    var nextT1 = [];
+    var nextT2 = [];
+    var subscript = []; // 下标  四个数组中的下标是相同的
+    var lastT2Subscript = [];
+    var newlastT2Subscript = [];
+    var lastT1Data = []; // 所有绿灯段之前柱子的高度之和
+    var lastT2Data1 = []; // 通过上顶边上顶点减去时间得到上顶边下顶点
+    var lastT2Data = [];
+    var nextT1Data = [];
+    var nextT2Data = [];
+    var greenWaveData = [];
+    var newlast2 = [];
+    // phaseData：每个路口的每个相位值   phaseNameData：每个路口的每个相位名称
+
+    // 绿波底边下顶点
+    for (var i = 0; i < phaseData.length; i++) {
+      for (var j = 0; j < phaseData[i].length; j++) {
+        if (phaseNameData[i][j] === "A") {
+          lastT1.push(j === 0 ? 0 : phaseData[i].getNumArrayTotal(j));
+        }
+      }
+    }
+
+    for (var i = 0; i < lastT1.length; i++) {
+      // 找到两个路口之间的间隔段
+      if (lastT1[i] > lastT1[i + 1]) {
+        subscript.push(i + 1);
+      }
+    }
+
+    for (var i = 0; i < subscript.length; i++) {
+      if (i === 0) {
+        lastT1Data.push(lastT1.slice(0, subscript[0]));
+      } else {
+        lastT1Data.push(lastT1.slice(subscript[i - 1], subscript[i]));
+      }
+    }
+    lastT1Data.push(
+      lastT1.slice(subscript[subscript.length - 1], lastT1.length)
+    );
+    // 上顶边下顶点 第一种情况
+    // 绿灯段上顶点距离坐标轴的距离
+    for (var i = 0; i < phaseData.length; i++) {
+      for (var j = 0; j < phaseData[i].length; j++) {
+        if (phaseNameData[i][j] === "A") {
+          lastT2.push(
+            (j === 0 ? 0 : phaseData[i].getNumArrayTotal(j)) + phaseData[i][j]
+          );
+        }
+      }
+    }
+    for (var i = 0; i < subscript.length; i++) {
+      if (i === 0) {
+        lastT2Data.push(lastT2.slice(0, subscript[0]));
+      } else {
+        lastT2Data.push(lastT2.slice(subscript[i - 1], subscript[i]));
+      }
+    }
+    lastT2Data.push(
+      lastT2.slice(subscript[subscript.length - 1], lastT2.length)
+    );
+    newlast2 = lastT2Data.slice(1, lastT2Data.length);
+    // 绿波底边上顶点
+    for (var i = 0; i < lastT1Data.length; i++) {
+      for (var j = 0; j < lastT1Data[i].length; j++) {
+        nextT1.push(lastT1Data[i][j] + time[i + 1]);
+      }
+    }
+    for (var i = 0; i < subscript.length; i++) {
+      if (i === 0) {
+        nextT1Data.push(nextT1.slice(0, subscript[0]));
+      } else {
+        nextT1Data.push(nextT1.slice(subscript[i - 1], subscript[i]));
+      }
+    }
+    nextT1Data.push(
+      nextT1.slice(subscript[subscript.length - 1], nextT1.length)
+    );
+
+    // 绿波带顶边上顶点
+    for (var i = 0; i < phaseData.length; i++) {
+      for (var j = 0; j < phaseData[i].length; j++) {
+        if (phaseNameData[i][j] === "A") {
+          nextT2.push(
+            (j === 0 ? 0 : phaseData[i].getNumArrayTotal(j)) + phaseData[i][j]
+          );
+        }
+      }
+    }
+    for (var i = 0; i < nextT2.length; i++) {
+      if (nextT2[i] > nextT2[i + 1]) {
+        lastT2Subscript.push(i + 1);
+      }
+    }
+
+    for (var i = 0; i < lastT2Subscript.length; i++) {
+      if (i === 0) {
+        nextT2Data.push(nextT2.slice(0, subscript[0]));
+      } else {
+        nextT2Data.push(
+          nextT2.slice(lastT2Subscript[i - 1], lastT2Subscript[i])
+        );
+      }
+    }
+    nextT2Data.push(
+      nextT2.slice(lastT2Subscript[lastT2Subscript.length - 1], nextT2.length)
+    );
+
+    // 上顶边下顶点 第二种情况
+    for (var i = 0; i < newlast2.length; i++) {
+      for (var j = 0; j < newlast2[i].length; j++) {
+        lastT21.push(newlast2[i][j] - time[i + 1]);
+      }
+    }
+    for (var i = 0; i < lastT21.length; i++) {
+      if (lastT21[i] > lastT21[i + 1]) {
+        newlastT2Subscript.push(i + 1);
+      }
+    }
+    for (var i = 0; i < subscript.length; i++) {
+      if (i === 0) {
+        lastT2Data1.push(lastT21.slice(0, newlastT2Subscript[0]));
+      } else {
+        lastT2Data1.push(
+          lastT21.slice(newlastT2Subscript[i - 1], newlastT2Subscript[i])
+        );
+      }
+    }
+    lastT2Data1.push(
+      lastT21.slice(
+        newlastT2Subscript[newlastT2Subscript.length - 1],
+        lastT21.length
+      )
+    );
+
+    console.log("lastT1Data[i][j]", lastT1Data);
+    console.log("lastT2Data1[i][j]", lastT2Data1);
+    console.log("nextT1Data[i][j]", nextT1Data);
+    console.log("nextT2Data[i][j]", nextT2Data);
+    console.log("lastT2Data", lastT2Data);
+    // 处理横坐标  两根柱子间所有的绿波带的横坐标都相同
+
+    // 绘制绿波带
+    var a = "";
+    var b = "";
+    var c = "";
+    var d = "";
+    for (var i = 0; i < lastT1Data.length - 1; i++) {
+      for (var j = 0; j < lastT1Data[i].length; j++) {
+        // 第一种情况
+        // console.log("nextT1Data[i][j]", nextT1Data[i][j]);
+        // console.log("lastT2Data[i + 1][j]", lastT2Data[i + 1][j]);
+        if (
+          lastT2Data[i][j] + time[i + 1] > lastT1Data[i + 1][j] &&
+          nextT1Data[i][j] > lastT2Data[i + 1][j] &&
+          nextT1Data[i][j] < lastT1Data[i + 1][j + 1]
+        ) {
+          console.log("i", i);
+          console.log("nextT1Data[i + 1][j]", nextT1Data[i + 1][j]);
+        }
+
+        // 第二种情况
+        if (
+          // 以绿灯段底边和lastT1Data为起点，如果lastT1Data+t在lastT1Data 和 绿灯段顶边和lastT2Data中间
+          nextT1Data[i][j] >= lastT1Data[i][j] &&
+          nextT1Data[i][j] < lastT2Data[i][j]
+        ) {
+          // 第二种情况的第一种情况
+          // console.log("lastT2Data1[i][j]", lastT2Data1[i][j]);
+          // console.log("lastT2Data[i][j]", lastT2Data[i][j]);
+          if (lastT2Data1[i][j] > lastT2Data[i][j]) {
+          }
+          // 第二种情况的第二种情况
+          if (
+            lastT2Data1[i][j] > lastT1Data[i][j] &&
+            lastT2Data1[i][j] < lastT2Data[i][j] &&
+            nextT2Data[i + 1][j] > nextT1Data[i + 1][j]
+          ) {
+            ctx.beginPath();
+            // 左下
+            ctx.moveTo(
+              distance.getNumArrayTotal(i + 1) / 2 + 100 + 10,
+              canvas.height - bottom - lastT1Data[i][j]
+            );
+            // 左上
+            ctx.lineTo(
+              distance.getNumArrayTotal(i + 1) / 2 + 100 + 10,
+              canvas.height - bottom - lastT2Data1[i][j]
+            );
+            // 右上
+            ctx.lineTo(
+              distance.getNumArrayTotal(i + 2) / 2 + 100 + 10,
+              canvas.height - bottom - nextT2Data[i + 1][j]
+            );
+            // 右下
+            ctx.lineTo(
+              distance.getNumArrayTotal(i + 2) / 2 + 100 + 10,
+              canvas.height - bottom - nextT1Data[i][j]
+            );
+            ctx.fillStyle = "#80aa33";
+            ctx.globalAlpha = 0.7;
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+      }
+    }
+  }
+
+  drawChangeRect();
+  coordinateSystem();
+</script>

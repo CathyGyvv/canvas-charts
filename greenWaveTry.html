@@ -1,0 +1,145 @@
+<div class="canvas-box" style="position:relative">
+  <canvas style="background-color:#253143" id="canvas" width="1800" height="600"></canvas>
+</div>
+<script type="text/javascript">
+  var canvas = document.getElementById('canvas')
+  var ctx = canvas.getContext('2d');
+  // var roadName = ['诸光路与蟠中东路路口', '诸光路与徐民东路路口', '盈港东路与诸光路路口', '诸光路与会卓路路口', '诸光路与徐泾港路路口', '诸光路与谢卫路路口']
+  var roadName = ['诸光路与蟠中东路路口', '诸光路与徐', '盈港东路与', '诸光路与', '诸光路与徐', '诸光路与谢']
+  // 相位名称 A 为 绿灯， B 为 红灯
+  var phaseName = [
+    ['A', 'B', 'C'],
+    ['A', 'B', 'C'],
+    ['A', 'B', 'C', 'D'],
+    ['A', 'B', 'C'],
+    ['A', 'B'],
+    ['A', 'B']
+  ]
+  // 协调相位
+  var coordinate = ['A', 'A', 'A', 'A', 'A', 'A']
+  // 协调相位和非协调相位时长
+  var coordinationTime = [
+    [92, 68],
+    [105, 55],
+    [51, 109],
+    [84, 76],
+    [125, 35],
+    [112, 42]
+  ]
+  // 相位时长
+  var phaseTime = [
+    [92, 35, 33],
+    [105, 25, 30],
+    [51, 33, 38, 38],
+    [84, 34, 43],
+    [125, 35],
+    [112, 42]
+  ]
+  var cycle = [160, 160, 160, 160, 160, 154] // 周期
+  var phaseDiff = [41, 20, 0, 115, 92, 49] // 相位差
+  var distance = [20, 349, 381, 452, 277, 541] //第一位为第一根柱子和坐标轴的距离  距离
+  var green = [92, 105, 51, 84, 125, 112] // 协调相位时长
+  var red = [68, 55, 109, 76, 35, 42] // 非协调相位时长
+  var bottom = 50
+  // 画出坐标系
+  function coordinateSystem() {
+    ctx.strokeStyle = "#7a7b7f";
+    ctx.beginPath();
+    ctx.moveTo(100, 50);
+    ctx.lineTo(100, 550);
+    ctx.moveTo(100, 550);
+    ctx.lineTo(1700, 550);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fillStyle = "grey ";
+
+    for (var i = 0; i < 10; i++) {
+      var numsY = 550 - (distance[i] / 100) * 100;
+      var numsX = i * 100 + 150;
+
+      // 纵坐标
+      var colText = ctx.measureText((12 - i) * 500); // 检查字体的宽度
+      ctx.fillText(i * 100, 100 - colText.width, ((distance.length - 1) - i) * 100 + 50);
+      // 横坐标
+      var rowText = ctx.measureText(distance[i]);
+      ctx.fillText(i * 100, (i + 1) * 100, 570);
+    }
+  }
+
+  function drawRoadName() {
+    for (var i = 0; i < roadName.length; i++) {
+      ctx.fillStyle = "grey ";
+      ctx.font = "12px '微软雅黑'";
+      ctx.textAlign = "left";
+      ctx.fillText(roadName[i], distance[i] + 80, canvas.height - 25 + (i + 1) % 2 * 20);
+
+    }
+  }
+
+  // 绘制柱状图
+  function drawRect() {
+    for (var k = 0; k < 3; k++) { // 画出三个周期的柱状图
+      for (var i = 0; i < roadName.length; i++) {
+        for (var j = 0; j < phaseName[i].length; j++) {
+          // 将相位名称与协调相位进行比较，如果与协调相位相等则是白色
+          const color = phaseName[i][j] === coordinate[i] ? 'white' : 'red'
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          // 横坐标 距离加上坐标轴和画布左边的距离 
+          // 纵坐标 起点是画布的高度减去坐标轴和画布底边的距离 顶端坐标是画布的高度减去坐标轴与画布底边的距离减去相位时长和 
+
+          var phases = [] // 第二个柱子的起点纵坐标是第一个柱子的高度加上横坐标与画布底边的距离
+          //获取柱子的起点纵坐标
+          if (phaseName[i].length === 4) {
+            phases = [phaseTime[i][0], phaseTime[i][0] +
+              phaseTime[i][1], phaseTime[i][0] +
+              phaseTime[i][1] + phaseTime[i][2], phaseTime[i][0] +
+              phaseTime[i][1] + phaseTime[i][2] + phaseTime[i][3]
+            ]
+          }
+          if (phaseName[i].length === 3) {
+            phases = [phaseTime[i][0], phaseTime[i][0] +
+              phaseTime[i][1], phaseTime[i][0] +
+              phaseTime[i][1] + phaseTime[i][2]
+            ]
+          }
+          if (phaseName[i].length === 2) {
+            phases = [phaseTime[i][0], phaseTime[i][0] +
+              phaseTime[i][1]
+            ]
+          } else if (phaseName[i].length === 1) {
+            phases = [phaseTime[i][0]]
+          }
+          // 第二根柱子的纵坐标起点为第一根柱子的终点 如果是第一根柱子则不减去高度
+          // 减去的50是坐标轴与画布底边的距离
+          ctx.moveTo(distance[i] + 100, canvas.height - k * cycle[i] - (j === 0 ? 0 : phases[j - 1]) -
+            bottom);
+          ctx.lineTo(distance[i] + 20 + 100, canvas.height - k * cycle[i] - (j === 0 ? 0 : phases[j - 1]) - bottom);
+          // 将两个相位之间留出1的空隙
+          ctx.lineTo(distance[i] + 20 + 100, canvas.height - k * cycle[i] - phases[j] - bottom + 1);
+          ctx.lineTo(distance[i] + 100, canvas.height - k * cycle[i] - phases[j] - bottom + 1);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+  }
+
+  // 获取鼠标在画布上点击的位置
+  function click() {
+    canvas.addEventListener('click', function (e) {
+      // console.log('canvas.getBoundingClientRect().left', canvas.getBoundingClientRect().left)
+      console.log('canvas', e.pageX - canvas.getBoundingClientRect().left)
+      // console.log('canvas', e.pageY - canvas.getBoundingClientRect().bottom)
+
+    })
+
+  }
+
+  // drawRoadName()
+  // click()
+  drawRect()
+  coordinateSystem()
+</script>
