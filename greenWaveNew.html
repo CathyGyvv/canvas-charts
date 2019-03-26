@@ -511,11 +511,6 @@
       )
     );
 
-    console.log("lastT1Data[i][j]", lastT1Data);
-    console.log("lastT2Data1[i][j]", lastT2Data1);
-    console.log("nextT1Data[i][j]", nextT1Data);
-    console.log("nextT2Data[i][j]", nextT2Data);
-    console.log("lastT2Data", lastT2Data);
     // 处理横坐标  两根柱子间所有的绿波带的横坐标都相同
 
     // 绘制绿波带
@@ -523,18 +518,42 @@
     var b = "";
     var c = "";
     var d = "";
+
     for (var i = 0; i < lastT1Data.length - 1; i++) {
       for (var j = 0; j < lastT1Data[i].length; j++) {
         // 第一种情况
-        // console.log("nextT1Data[i][j]", nextT1Data[i][j]);
-        // console.log("lastT2Data[i + 1][j]", lastT2Data[i + 1][j]);
         if (
-          lastT2Data[i][j] + time[i + 1] > lastT1Data[i + 1][j] &&
-          nextT1Data[i][j] > lastT2Data[i + 1][j] &&
-          nextT1Data[i][j] < lastT1Data[i + 1][j + 1]
+          // nextT1Data[i][j] > lastT2Data[i + 1][j] &&
+          // nextT1Data[i][j] < lastT1Data[i + 1][j + 1] &&
+          lastT2Data[i][j] + time[i] > lastT1Data[i + 1][j + 1] &&
+          lastT2Data[i][j] + time[i] < lastT2Data[i + 1][j + 1] &&
+          lastT1Data[i + 1][j + 1] - time[i + 1] < lastT2Data[i][j]
         ) {
-          console.log("i", i);
-          console.log("nextT1Data[i + 1][j]", nextT1Data[i + 1][j]);
+          ctx.beginPath();
+          // 左下
+          ctx.moveTo(
+            distance.getNumArrayTotal(i + 1) / 2 + 100 + 10,
+            canvas.height - bottom - (lastT1Data[i + 1][j + 1] - time[i + 1])
+          );
+          // 左上
+          ctx.lineTo(
+            distance.getNumArrayTotal(i + 1) / 2 + 100 + 10,
+            canvas.height - bottom - lastT2Data[i][j]
+          );
+          // 右上
+          ctx.lineTo(
+            distance.getNumArrayTotal(i + 2) / 2 + 100 + 10,
+            canvas.height - bottom - (lastT2Data[i][j] + time[i + 1])
+          );
+          // 右下
+          ctx.lineTo(
+            distance.getNumArrayTotal(i + 2) / 2 + 100 + 10,
+            canvas.height - bottom - lastT1Data[i + 1][j + 1]
+          );
+          ctx.fillStyle = "#80aa33";
+          ctx.globalAlpha = 0.7;
+          ctx.closePath();
+          ctx.fill();
         }
 
         // 第二种情况
@@ -544,8 +563,6 @@
           nextT1Data[i][j] < lastT2Data[i][j]
         ) {
           // 第二种情况的第一种情况
-          // console.log("lastT2Data1[i][j]", lastT2Data1[i][j]);
-          // console.log("lastT2Data[i][j]", lastT2Data[i][j]);
           if (lastT2Data1[i][j] > lastT2Data[i][j]) {
           }
           // 第二种情况的第二种情况
@@ -553,6 +570,38 @@
             lastT2Data1[i][j] > lastT1Data[i][j] &&
             lastT2Data1[i][j] < lastT2Data[i][j] &&
             nextT2Data[i + 1][j] > nextT1Data[i + 1][j]
+          ) {
+            ctx.beginPath();
+            // 左下
+            ctx.moveTo(
+              distance.getNumArrayTotal(i + 1) / 2 + 100 + 10,
+              canvas.height - bottom - lastT1Data[i][j]
+            );
+            // 左上
+            ctx.lineTo(
+              distance.getNumArrayTotal(i + 1) / 2 + 100 + 10,
+              canvas.height - bottom - lastT2Data1[i][j]
+            );
+            // 右上
+            ctx.lineTo(
+              distance.getNumArrayTotal(i + 2) / 2 + 100 + 10,
+              canvas.height - bottom - nextT2Data[i + 1][j]
+            );
+            // 右下
+            ctx.lineTo(
+              distance.getNumArrayTotal(i + 2) / 2 + 100 + 10,
+              canvas.height - bottom - nextT1Data[i][j]
+            );
+            ctx.fillStyle = "#80aa33";
+            ctx.globalAlpha = 0.7;
+            ctx.closePath();
+            ctx.fill();
+          }
+          if (
+            lastT2Data[i][j] + time[i] > lastT1Data[i + 1][j + 1] &&
+            lastT2Data[i][j] + time[i] < lastT2Data[i + 1][j + 1] &&
+            lastT1Data[i + 1][j + 1] - time[i + 1] < lastT2Data[i][j] &&
+            lastT1Data[i][j] < lastT2Data1[i][j]
           ) {
             ctx.beginPath();
             // 左下
