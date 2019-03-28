@@ -1,190 +1,193 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no"
-    />
-    <title>实现canvas里图形的拖拽</title>
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
 
-      .canvas {
-        margin: 20px;
-        background: #ddd;
-      }
-    </style>
-  </head>
-  <body>
-    <canvas id="canvas" class="canvas" width="500" height="300"></canvas>
-    <script>
-      ~(function() {
-        var canvas = document.getElementById("canvas"),
-          graphs = [],
-          // 需要绘制的三个图形
-          graphAttr = [
-            {
-              x: 60,
-              y: 60,
-              w: 100,
-              h: 100,
-              bgColor: "rgba(111, 84, 153 , 0.8)",
-              canvasObj: canvas
-            },
-            {
-              x: 350,
-              y: 120,
-              w: 50,
-              h: 50,
-              bgColor: "rgba(0, 33, 66 , 0.8)",
-              canvasObj: canvas,
-              shape: "circle"
-            },
-            {
-              x: 200,
-              y: 130,
-              w: 70,
-              h: 70,
-              bgColor: "rgba(228, 134, 50 , 0.8)",
-              canvasObj: canvas,
-              shape: "triangle"
-            }
-          ],
-          tempGraphArr = []; // 用于暂存需要绘制的图形
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+    content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+  <title>实现canvas里图形的拖拽</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
-        dragGraph = function(x, y, w, h, fillStyle, canvas, graphShape) {
-          this.x = x;
-          this.y = y;
-          this.w = w;
-          this.h = h;
-          this.fillStyle = fillStyle || "rgba(26, 188, 156 , 0.5)";
-          this.canvas = canvas;
-          this.context = canvas.getContext("2d");
-          this.canvasPos = canvas.getBoundingClientRect(); // 获取元素的边界框
-          this.graphShape = graphShape;
-        };
+    .canvas {
+      margin: 20px;
+      background: #ddd;
+    }
+  </style>
+</head>
 
-        dragGraph.prototype = {
-          // 开始绘制
-          paint: function() {
-            this.context.beginPath();
-            this.context.fillStyle = this.fillStyle;
-            this.shapeDraw();
-            this.context.fill();
-            this.drawBorder();
-            this.context.closePath();
+<body>
+  <canvas id="canvas" class="canvas" width="500" height="300"></canvas>
+  <script>
+    ~(function () {
+      var canvas = document.getElementById("canvas"),
+        graphs = [],
+        // 需要绘制的三个图形
+        graphAttr = [{
+            x: 60,
+            y: 60,
+            w: 100,
+            h: 100,
+            bgColor: "rgba(111, 84, 153 , 0.8)",
+            canvasObj: canvas
           },
-          // 判断鼠标是否在图形中
-          isMouseInGraph: function(mouse) {
-            this.context.beginPath();
-            this.shapeDraw();
-            return this.context.isPointInPath(mouse.x, mouse.y); // 鼠标的位置是否在canvas界面中
+          {
+            x: 350,
+            y: 120,
+            w: 50,
+            h: 50,
+            bgColor: "rgba(0, 33, 66 , 0.8)",
+            canvasObj: canvas,
+            shape: "circle"
           },
-          // 绘制三种类型的图形
-          shapeDraw: function() {
-            if (this.graphShape == "circle") {
-              this.context.arc(this.x, this.y, 50, 0, Math.PI * 2);
-            } else if (this.graphShape == "triangle") {
-              this.context.moveTo(this.x + 50, this.y + 50);
-              this.context.lineTo(this.x + 100, this.y + 130);
-              this.context.lineTo(this.x, this.y + 130);
-            } else {
-              this.context.rect(this.x, this.y + 200, this.w, this.h);
-            }
-          },
-          // 移动的过程中清除上一个图形
-          erase: function() {
-            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          },
-          drawBorder: function() {
-            this.context.strokeStyle = "#7a7b7f";
-            this.context.beginPath();
-            this.context.moveTo(0, 0);
-            this.context.lineTo(0, 300);
-            this.context.moveTo(0, 300);
-            this.context.lineTo(500, 300);
-            this.context.closePath();
-            this.context.stroke();
+          {
+            x: 200,
+            y: 130,
+            w: 70,
+            h: 70,
+            bgColor: "rgba(228, 134, 50 , 0.8)",
+            canvasObj: canvas,
+            shape: "triangle"
           }
-        };
+        ],
+        tempGraphArr = []; // 用于暂存需要绘制的图形
 
-        canvas.addEventListener(
-          "mousedown",
-          function(e) {
-            // 表示为鼠标在canvas画布上的位置
-            var mouse = {
-              // x 的值为相对于屏幕的距离减去画布左边界相对于屏幕的距离
-              // y 的值为相对于屏幕的距离减去画布上边界相对于屏幕的距离
-              x: e.clientX - canvas.getBoundingClientRect().left,
-              y: e.clientY - canvas.getBoundingClientRect().top
+      dragGraph = function (x, y, w, h, fillStyle, canvas, graphShape) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.fillStyle = fillStyle || "rgba(26, 188, 156 , 0.5)";
+        this.canvas = canvas;
+        this.context = canvas.getContext("2d");
+        this.canvasPos = canvas.getBoundingClientRect(); // 获取元素的边界框
+        this.graphShape = graphShape;
+      };
+
+      dragGraph.prototype = {
+        // 开始绘制
+        paint: function () {
+          this.context.beginPath();
+          this.context.fillStyle = this.fillStyle;
+          this.shapeDraw();
+          this.context.fill();
+          this.drawBorder();
+          this.context.closePath();
+        },
+        // 判断鼠标是否在图形中
+        isMouseInGraph: function (mouse) {
+          this.context.beginPath();
+          this.shapeDraw();
+          return this.context.isPointInPath(mouse.x, mouse.y); // 鼠标的位置是否在canvas界面中
+        },
+        // 绘制三种类型的图形
+        shapeDraw: function () {
+          if (this.graphShape == "circle") {
+            this.context.arc(this.x, this.y, 50, 0, Math.PI * 2);
+          } else if (this.graphShape == "triangle") {
+            this.context.moveTo(this.x + 50, this.y + 50);
+            this.context.lineTo(this.x + 100, this.y + 130);
+            this.context.lineTo(this.x, this.y + 130);
+          } else {
+            this.context.rect(this.x, this.y + 200, this.w, this.h);
+          }
+        },
+        // 移动的过程中清除上一个图形
+        erase: function () {
+          this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        },
+        drawBorder: function () {
+          this.context.strokeStyle = "#7a7b7f";
+          this.context.beginPath();
+          this.context.moveTo(0, 0);
+          this.context.lineTo(0, 300);
+          this.context.moveTo(0, 300);
+          this.context.lineTo(500, 300);
+          this.context.closePath();
+          this.context.stroke();
+        }
+      };
+
+      canvas.addEventListener(
+        "mousedown",
+        function (e) {
+          // 表示为鼠标在canvas画布上的位置
+          var mouse = {
+            // x 的值为相对于屏幕的距离减去画布左边界相对于屏幕的距离
+            // y 的值为相对于屏幕的距离减去画布上边界相对于屏幕的距离
+            x: e.clientX - canvas.getBoundingClientRect().left,
+            y: e.clientY - canvas.getBoundingClientRect().top
+          };
+          // 遍历所有图形并绘制
+          graphs.forEach(function (shape) {
+            // 记录鼠标与元素的距离
+            var offset = {
+              x: mouse.x - shape.x,
+              y: mouse.y - shape.y
             };
-            // 遍历所有图形并绘制
-            graphs.forEach(function(shape) {
-              // 记录鼠标与元素的距离
-              var offset = {
-                x: mouse.x - shape.x,
-                y: mouse.y - shape.y
-              };
-              if (shape.isMouseInGraph(mouse)) {
-                // 如果鼠标的点在图形上
-                // shape为当前点击的图形
-                tempGraphArr.push(shape); // 在用于暂存图形的数组中存入所有图形
-                canvas.addEventListener(
-                  "mousemove",
-                  function(e) {
-                    // 用于存放移动过程中所有相对于画布的点
-                    mouse = {
-                      x: e.clientX - canvas.getBoundingClientRect().left,
-                      y: e.clientY - canvas.getBoundingClientRect().top
-                    };
-                    if (shape === tempGraphArr[tempGraphArr.length - 1]) {
-                      shape.x = mouse.x - offset.x;
-                      shape.y = mouse.y - offset.y;
-                      shape.erase();
-                      drawGraph();
-                    }
-                  },
-                  false
-                );
-                // 鼠标抬起即停止拖动时将暂存数组置为空
-                canvas.addEventListener(
-                  "mouseup",
-                  function() {
-                    tempGraphArr = [];
-                  },
-                  false
-                );
-              }
-            });
-            e.preventDefault();
-          },
-          false
+            if (shape.isMouseInGraph(mouse)) {
+              // 如果鼠标的点在图形上
+              // shape为当前点击的图形
+              tempGraphArr.push(shape); // 在用于暂存图形的数组中存入所有图形
+              canvas.addEventListener(
+                "mousemove",
+                function (e) {
+                  // 用于存放移动过程中所有相对于画布的点
+                  mouse = {
+                    x: e.clientX - canvas.getBoundingClientRect().left,
+                    y: e.clientY - canvas.getBoundingClientRect().top
+                  };
+                  if (shape === tempGraphArr[tempGraphArr.length - 1]) {
+                    console.log('shape', shape)
+
+                    shape.x = mouse.x - offset.x;
+                    shape.y = mouse.y - offset.y;
+                    shape.erase();
+                    drawGraph();
+                  }
+                },
+                false
+              );
+              // 鼠标抬起即停止拖动时将暂存数组置为空
+              canvas.addEventListener(
+                "mouseup",
+                function () {
+                  tempGraphArr = [];
+                },
+                false
+              );
+            }
+          });
+          e.preventDefault();
+        },
+        false
+      );
+
+      for (var i = 0; i < graphAttr.length; i++) {
+        var graph = new dragGraph(
+          graphAttr[i].x,
+          graphAttr[i].y,
+          graphAttr[i].w,
+          graphAttr[i].h,
+          graphAttr[i].bgColor,
+          graphAttr[i].canvasObj,
+          graphAttr[i].shape
         );
+        graphs.push(graph);
+      }
+      console.log("graphs", graphs)
 
+      function drawGraph() {
         for (var i = 0; i < graphAttr.length; i++) {
-          var graph = new dragGraph(
-            graphAttr[i].x,
-            graphAttr[i].y,
-            graphAttr[i].w,
-            graphAttr[i].h,
-            graphAttr[i].bgColor,
-            graphAttr[i].canvasObj,
-            graphAttr[i].shape
-          );
-          graphs.push(graph);
+          graphs[i].paint();
         }
+      }
+      drawGraph();
+    })();
+  </script>
+</body>
 
-        function drawGraph() {
-          for (var i = 0; i < graphAttr.length; i++) {
-            graphs[i].paint();
-          }
-        }
-        drawGraph();
-      })();
-    </script>
-  </body>
 </html>
